@@ -1,5 +1,10 @@
 module ErgodicRadioLocalization
 
-# package code goes here
+using FEBOL
+using ErgodicControl
+
+export ErgodicPolicy
+
+include("policy.jl")
 
 end # module
