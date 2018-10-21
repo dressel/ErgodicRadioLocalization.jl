@@ -13,6 +13,8 @@ mutable struct ErgodicPolicyR2 <: FEBOL.Policy
 
     xd::VVF
     ud::VVF
+
+    verbose::Bool
 end
 
 function ErgodicPolicyR2(f::DF;
@@ -20,7 +22,9 @@ function ErgodicPolicyR2(f::DF;
                        planning_horizon::Int = 50,
                        execution_horizon::Int = 5,
                        visualize::Bool=true,
-                       solver::Symbol=:PTO
+                       solver::Symbol=:PTO,
+                       verbose::Bool=false,
+                       R::Matrix{Float64}=0.01 * eye(2)
                       )
 
     # ergodic manager
@@ -35,7 +39,7 @@ function ErgodicPolicyR2(f::DF;
     tm = TrajectoryManager(x0,h,N,ci)
     tm.barrier_cost = 1.0
 
-    tm.R = 0.2*eye(2)
+    tm.R = R
 
     cache = make_cache(f)
 
@@ -47,7 +51,8 @@ function ErgodicPolicyR2(f::DF;
                          visualize,
                          solver,
                          [[0.0]],
-                         [[0.0]]
+                         [[0.0]],
+                         verbose
                         )
 end
 
@@ -58,31 +63,24 @@ function FEBOL.action(m::SearchDomain, x::Vehicle, o, f::DF, p::ErgodicPolicyR2)
     if p.horizon_index >= p.execution_horizon
 
         # generate EID from filter
-        tic()
         p.em.phi = mutual_information(f, p.cache)
-        t = toq()
-        println("time to eid = ", t)
 
         # normalize and decompose
-        tic()
         normalize!(p.em)
-        t = toq()
-        println("time to normalize = ", t)
-        tic()
         decompose!(p.em)
-        t = toq()
-        println("time to decompose = ", t)
 
         # right now, let's just make a new trajectory each time
         p.tm.x0 = [x.x/L, x.y/L]
-        tic()
         if p.solver == :SMC
             p.xd, p.ud = smc_trajectory(p.em, p.tm, umax=5/L)
         else
-            p.xd, p.ud = pto_trajectory(p.em, p.tm)
+            tic()
+            p.xd, p.ud = pto_trajectory(p.em, p.tm, verbose=p.verbose)
+            t = toq()
+            if p.verbose
+                println("solve time = ", t)
+            end
         end
-        t = toq()
-        println("solve time = ", t)
 
         p.horizon_index = 0
     end
@@ -106,6 +104,8 @@ function FEBOL.action(m::SearchDomain, x::Vehicle, o, f::DF, p::ErgodicPolicyR2)
 
 
     a = (p.ud[p.horizon_index][1] * L, p.ud[p.horizon_index][2] * L, 0.0)
-    println("a = ", a)
+    if p.verbose
+        println("a = ", a)
+    end
     return a
 end
