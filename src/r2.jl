@@ -86,6 +86,12 @@ function FEBOL.action(m::SearchDomain, x::Vehicle, o, f::DF, p::ErgodicPolicyR2)
 
     p.horizon_index += 1
 
+    a = (p.ud[p.horizon_index][1] * L, p.ud[p.horizon_index][2] * L, 0.0)
+
+    if p.verbose
+        println("a = ", a)
+    end
+
     if p.visualize
         xd2 = deepcopy(p.xd)
         for xi in xd2
@@ -103,9 +109,7 @@ function FEBOL.action(m::SearchDomain, x::Vehicle, o, f::DF, p::ErgodicPolicyR2)
     end
 
 
-    a = (p.ud[p.horizon_index][1] * L, p.ud[p.horizon_index][2] * L, 0.0)
-    if p.verbose
-        println("a = ", a)
-    end
     return a
 end
+
+reset!()
