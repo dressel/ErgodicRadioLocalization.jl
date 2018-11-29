@@ -17,7 +17,7 @@ mutable struct ErgodicPolicyR2 <: FEBOL.Policy
     verbose::Bool
 end
 
-function ErgodicPolicyR2(f::DF;
+function ErgodicPolicyR2(f;
                        K::Int = 5,
                        planning_horizon::Int = 50,
                        execution_horizon::Int = 5,
@@ -58,7 +58,6 @@ end
 
 function FEBOL.action(m::SearchDomain, x::Vehicle, o, f::DF, p::ErgodicPolicyR2)
 
-    
     L = m.length
     if p.horizon_index >= p.execution_horizon
 
@@ -75,7 +74,7 @@ function FEBOL.action(m::SearchDomain, x::Vehicle, o, f::DF, p::ErgodicPolicyR2)
             p.xd, p.ud = smc_trajectory(p.em, p.tm, umax=5/L)
         else
             tic()
-            p.xd, p.ud = pto_trajectory(p.em, p.tm, verbose=p.verbose)
+            p.xd, p.ud = pto_trajectory(p.em, p.tm, verbose=p.verbose, max_iters=300)
             t = toq()
             if p.verbose
                 println("solve time = ", t)
@@ -99,8 +98,9 @@ function FEBOL.action(m::SearchDomain, x::Vehicle, o, f::DF, p::ErgodicPolicyR2)
         figure("MI")
         ErgodicControlPlots.cla()
         plot(p.em, p.xd)
-    end
 
+        # push this into some sort of thing
+    end
 
 
     a = (p.ud[p.horizon_index][1] * L, p.ud[p.horizon_index][2] * L, 0.0)

@@ -9,8 +9,6 @@ mutable struct ErgodicPolicySE2 <: FEBOL.Policy
     cache::Array{Float64,4}
     visualize::Bool
 
-    solver::Symbol
-
     xd::VVF
     ud::VVF
 end
@@ -19,13 +17,12 @@ function ErgodicPolicySE2(f::DF;
                        K::Int = 5,
                        planning_horizon::Int = 50,
                        execution_horizon::Int = 5,
-                       visualize::Bool=true,
-                       solver::Symbol=:PTO
+                       visualize::Bool=true
                       )
 
     # ergodic manager
     N = planning_horizon
-    d = Domain(f.n)
+    d = Domain([0,0,0], [1,1,2*pi], [f.n,f.n,36])
     em = ErgodicManagerSE2(d, K)
 
     # trajectory manager
@@ -36,7 +33,8 @@ function ErgodicPolicySE2(f::DF;
     tm.barrier_cost = 1.0
 
     println("tm.R = ", tm.R)
-    tm.R = 0.2*eye(2)
+    tm.R = 0.2*eye(3)
+    tm.Q = eye(3)
 
     cache = make_cache2(f)
 
@@ -46,7 +44,6 @@ function ErgodicPolicySE2(f::DF;
                          tm,
                          cache,
                          visualize,
-                         solver,
                          [[0.0]],
                          [[0.0]]
                         )
@@ -60,11 +57,11 @@ function FEBOL.action(m::SearchDomain, x::Vehicle, o, f::DF, p::ErgodicPolicySE2
 
         # generate EID from filter
         tic()
-        p.em.phi = mutual_information(f, p.cache)
+        copy!( p.em.phi, mutual_information(f, p.cache) )
         t = toq()
         println("time to eid = ", t)
 
-        # normalize and decompose
+        # normlize and decompose
         tic()
         normalize!(p.em)
         t = toq()
@@ -75,7 +72,7 @@ function FEBOL.action(m::SearchDomain, x::Vehicle, o, f::DF, p::ErgodicPolicySE2
         println("time to decompose = ", t)
 
         # right now, let's just make a new trajectory each time
-        p.tm.x0 = [x.x/L, x.y/L]
+        p.tm.x0 = [x.x/L, x.y/L, deg2rad(x.heading)]
         tic()
         p.xd, p.ud = pto_trajectory(p.em, p.tm)
         t = toq()
