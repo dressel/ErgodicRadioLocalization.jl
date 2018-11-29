@@ -44,7 +44,7 @@ function ErgodicPolicyR2(f;
     cache = make_cache(f)
 
     return ErgodicPolicyR2(execution_horizon,
-                         9999999,       # index should just start very large
+                         execution_horizon,  # index should be >= exec hrzn
                          em,
                          tm,
                          cache,
