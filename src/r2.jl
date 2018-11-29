@@ -56,6 +56,10 @@ function ErgodicPolicyR2(f;
                         )
 end
 
+function FEBOL.reset!(p::ErgodicPolicyR2)
+    p.horizon_index = p.execution_horizon
+end
+
 function FEBOL.action(m::SearchDomain, x::Vehicle, o, f::DF, p::ErgodicPolicyR2)
 
     L = m.length
