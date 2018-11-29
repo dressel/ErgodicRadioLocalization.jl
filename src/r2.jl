@@ -115,5 +115,3 @@ function FEBOL.action(m::SearchDomain, x::Vehicle, o, f::DF, p::ErgodicPolicyR2)
 
     return a
 end
-
-reset!()
